@@ -135,7 +135,11 @@ public class Application {
      */
     @JsonProperty("instance")
     public List<InstanceInfo> getInstances() {
-        return Optional.ofNullable(shuffledInstances.get()).orElseGet(this::getInstancesAsIsFromEureka);
+        List<InstanceInfo> instances = shuffledInstances.get();
+        if (instances == null) {
+            instances = this.getInstancesAsIsFromEureka();
+        }
+        return instances;
     }
 
     /**
