@@ -30,7 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -71,7 +70,7 @@ public class Applications {
         // This avoids CLQ and Node allocations. 56% of VIPs have exactly 1 instance.
         private List<InstanceInfo> instances = Collections.emptyList();
         final AtomicLong roundRobinIndex = new AtomicLong(0);
-        final AtomicReference<List<InstanceInfo>> vipList = new AtomicReference<>(Collections.emptyList());
+        private volatile List<InstanceInfo> vipList = Collections.emptyList();
 
         void addInstance(InstanceInfo info) {
             int size = instances.size();
@@ -103,8 +102,12 @@ public class Applications {
             return roundRobinIndex;
         }
 
-        public AtomicReference<List<InstanceInfo>> getVipList() {
+        List<InstanceInfo> getVipList() {
             return vipList;
+        }
+
+        void setVipList(List<InstanceInfo> vipList) {
+            this.vipList = vipList;
         }
     }
 
@@ -202,8 +205,7 @@ public class Applications {
     public List<InstanceInfo> getInstancesByVirtualHostName(String virtualHostName) {
         return Optional.ofNullable(this.virtualHostNameAppMap.get(virtualHostName.toUpperCase(Locale.ROOT)))
             .map(VipIndexSupport::getVipList)
-            .map(AtomicReference::get)
-            .orElseGet(Collections::emptyList); 
+            .orElseGet(Collections::emptyList);
     }
 
     /**
@@ -218,8 +220,7 @@ public class Applications {
     public List<InstanceInfo> getInstancesBySecureVirtualHostName(String secureVirtualHostName) {
         return Optional.ofNullable(this.secureVirtualHostNameAppMap.get(secureVirtualHostName.toUpperCase(Locale.ROOT)))
                 .map(VipIndexSupport::getVipList)
-                .map(AtomicReference::get)
-                .orElseGet(Collections::emptyList);        
+                .orElseGet(Collections::emptyList);
     }
 
     /**
@@ -440,7 +441,7 @@ public class Applications {
             Collections.shuffle(list, shuffleRandom);
             filteredInstances = list;
         }
-        vipIndexSupport.vipList.set(filteredInstances);
+        vipIndexSupport.setVipList(filteredInstances);
         vipIndexSupport.roundRobinIndex.set(0);
     }
 
