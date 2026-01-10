@@ -139,6 +139,17 @@ public class Applications {
     }
 
     /**
+     * Returns whether there are any registered applications.
+     * This is more efficient than {@code getRegisteredApplications().isEmpty()}
+     * as it avoids creating a defensive copy.
+     *
+     * @return true if there are no registered applications
+     */
+    public boolean isRegisteredApplicationsEmpty() {
+        return this.applications.isEmpty();
+    }
+
+    /**
      * Gets the registered <em>application</em> for the given
      * application name.
      *

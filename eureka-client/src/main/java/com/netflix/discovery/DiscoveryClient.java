@@ -1001,7 +1001,7 @@ public class DiscoveryClient implements EurekaClient {
                     || (!Strings.isNullOrEmpty(clientConfig.getRegistryRefreshSingleVipAddress()))
                     || forceFullRegistryFetch
                     || (applications == null)
-                    || (applications.getRegisteredApplications().size() == 0)
+                    || applications.isRegisteredApplicationsEmpty()
                     || (applications.getVersion() == -1)) //Client application does not have latest library supporting delta
             {
                 logger.info("Disable delta property : {}", clientConfig.shouldDisableDelta());
@@ -1009,7 +1009,7 @@ public class DiscoveryClient implements EurekaClient {
                 logger.info("Force full registry fetch : {}", forceFullRegistryFetch);
                 logger.info("Application is null : {}", (applications == null));
                 logger.info("Registered Applications size is zero : {}",
-                        (applications.getRegisteredApplications().size() == 0));
+                        applications.isRegisteredApplicationsEmpty());
                 logger.info("Application version is -1: {}", (applications.getVersion() == -1));
                 getAndStoreFullRegistry();
             } else {
