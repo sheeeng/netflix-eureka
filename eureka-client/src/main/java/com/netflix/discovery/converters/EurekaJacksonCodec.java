@@ -638,7 +638,9 @@ public class EurekaJacksonCodec {
                                 String key = intern.apply(jp, CacheScope.GLOBAL_SCOPE);
                                 jsonToken = jp.nextToken();
                                 String value = intern.apply(jp, CacheScope.APPLICATION_SCOPE );
-                                metadataMap = Optional.ofNullable(metadataMap).orElseGet(METADATA_MAP_SUPPLIER);
+                                if (metadataMap == null) {
+                                    metadataMap = METADATA_MAP_SUPPLIER.get();
+                                }
                                 metadataMap.put(key, value);
                             }
                         };   
