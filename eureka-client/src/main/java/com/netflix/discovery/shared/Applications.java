@@ -78,7 +78,11 @@ public class Applications {
                 // 0 -> 1: use singletonList (56% of VIPs stop here)
                 instances = Collections.singletonList(info);
             } else if (size == 1) {
-                // 1 -> 2: transition singletonList to ArrayList
+                // 1 -> 2: transition singletonList to ArrayList.
+                // Capacity 12 chosen based on prod data analysis: covers 81% of multi-instance
+                // VIPs without resize (spikes at 6, 9, 12 instances from 3-AZ deployments).
+                // ArrayList grows 1.5x (12->18->27), aligning well with common sizes.
+                // Capacity 12 minimizes total allocation vs smaller capacities.
                 InstanceInfo first = instances.get(0);
                 ArrayList<InstanceInfo> list = new ArrayList<>(12);
                 list.add(first);
