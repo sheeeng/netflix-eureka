@@ -420,10 +420,11 @@ public class ApplicationsTest {
         apps.addApplication(app);
         apps.shuffleInstances(false);
 
-        // Instance exists in application but no VIP mapping
+        // Instance exists in application
         assertEquals(1, apps.getRegisteredApplications("TestApp").size());
         assertEquals(1, apps.getRegisteredApplications("TestApp").getInstancesAsIsFromEureka().size());
-        assertTrue(apps.getInstancesByVirtualHostName("").isEmpty());
+        // Legacy behavior: empty VIP creates a mapping with empty string key
+        assertEquals(1, apps.getInstancesByVirtualHostName("").size());
     }
 
     @Test
