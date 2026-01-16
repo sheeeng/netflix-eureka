@@ -175,6 +175,17 @@ public class Applications {
     }
 
     /**
+     * Returns whether there are any registered applications.
+     * This is more efficient than {@code getRegisteredApplications().isEmpty()}
+     * as it avoids creating a defensive copy.
+     *
+     * @return true if there are no registered applications
+     */
+    public boolean isRegisteredApplicationsEmpty() {
+        return this.applications.isEmpty();
+    }
+
+    /**
      * Gets the registered <em>application</em> for the given
      * application name.
      *
@@ -279,11 +290,19 @@ public class Applications {
      *            the map to populate
      */
     public void populateInstanceCountMap(Map<String, AtomicInteger> instanceCountMap) {
-        for (Application app : this.getRegisteredApplications()) {
-            for (InstanceInfo info : app.getInstancesAsIsFromEureka()) {
-                AtomicInteger instanceCount = instanceCountMap.computeIfAbsent(info.getStatus().name(),
-                        k -> new AtomicInteger(0));
-                instanceCount.incrementAndGet();
+        // accrue here as lightweight as possible
+        int[] statusCounts = new int[InstanceStatus.values().length];
+        Consumer<InstanceInfo> countByStatus = info -> statusCounts[info.getStatus().ordinal()]++;
+        for (Application app : this.applications) {
+            app.forEachInstance(countByStatus);
+        }
+
+        // now convert it over to the API form in a single pass
+        for (InstanceStatus status : InstanceStatus.values()) {
+            int count = statusCounts[status.ordinal()];
+            if (count > 0) {
+                instanceCountMap.computeIfAbsent(status.name(), k -> new AtomicInteger(0))
+                    .addAndGet(count);
             }
         }
     }
