@@ -15,7 +15,6 @@ dependencies {
     api "com.netflix.spectator:spectator-api:${spectatorVersion}"
     api "org.slf4j:slf4j-api:${slf4jVersion}"
     implementation "javax.annotation:javax.annotation-api:1.2"
-    implementation 'com.google.guava:guava:33.0.0-jre'
     // compile "com.sun.jersey:jersey-core:${jerseyVersion}"
     // compile "com.sun.jersey:jersey-client:${jerseyVersion}"
     // compile "com.sun.jersey.contribs:jersey-apache-client4:${jerseyVersion}"
