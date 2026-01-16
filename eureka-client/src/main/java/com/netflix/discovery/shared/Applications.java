@@ -471,7 +471,9 @@ public class Applications {
         // | Avg string length     | 29.5   | 25.8    |
         // | Max string length     | 204    | 468     |
 
-        if (vipAddresses == null || vipAddresses.isEmpty()) {
+        // Note: empty vipAddresses is intentionally allowed for backwards compatibility.
+        // Legacy behavior: "" creates a mapping with empty string key.
+        if (vipAddresses == null) {
             return;
         }
 
