@@ -20,7 +20,6 @@ import javax.annotation.Nullable;
 import java.util.AbstractQueue;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -34,6 +33,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import com.netflix.discovery.util.MapUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -353,8 +354,8 @@ public class Applications {
             @Nullable Map<String, Applications> remoteRegionsRegistry, 
             @Nullable EurekaClientConfig clientConfig,
             @Nullable InstanceRegionChecker instanceRegionChecker) {
-        Map<String, VipIndexSupport> secureVirtualHostNameAppMap = new HashMap<>();
-        Map<String, VipIndexSupport> virtualHostNameAppMap = new HashMap<>();
+        Map<String, VipIndexSupport> secureVirtualHostNameAppMap = MapUtil.newHashMapWithExpectedSize(this.secureVirtualHostNameAppMap.size());
+        Map<String, VipIndexSupport> virtualHostNameAppMap = MapUtil.newHashMapWithExpectedSize(this.virtualHostNameAppMap.size());
         for (Application application : appNameApplicationMap.values()) {
             if (indexByRemoteRegions) {
                 application.shuffleAndStoreInstances(remoteRegionsRegistry, clientConfig, instanceRegionChecker);
