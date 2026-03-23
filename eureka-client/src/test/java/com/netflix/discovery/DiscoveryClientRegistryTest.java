@@ -16,6 +16,10 @@ import com.netflix.discovery.shared.transport.EurekaHttpClient;
 import com.netflix.discovery.shared.transport.EurekaHttpResponse;
 import com.netflix.discovery.shared.transport.SimpleEurekaHttpServer;
 import com.netflix.discovery.util.InstanceInfoGenerator;
+import com.netflix.spectator.api.Counter;
+import com.netflix.spectator.api.DefaultRegistry;
+import com.netflix.spectator.api.Registry;
+import com.netflix.spectator.api.Spectator;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -52,6 +56,7 @@ public class DiscoveryClientRegistryTest {
 
     private static final EurekaHttpClient requestHandler = mock(EurekaHttpClient.class);
     private static SimpleEurekaHttpServer eurekaHttpServer;
+    private static DefaultRegistry testRegistry;
 
     @Rule
     public DiscoveryClientResource discoveryClientResource = DiscoveryClientResource.newBuilder()
@@ -67,12 +72,17 @@ public class DiscoveryClientRegistryTest {
     @BeforeClass
     public static void setUpClass() throws IOException {
         eurekaHttpServer = new SimpleEurekaHttpServer(requestHandler);
+        testRegistry = new DefaultRegistry();
+        Spectator.globalRegistry().add(testRegistry);
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
         if (eurekaHttpServer != null) {
             eurekaHttpServer.shutdown();
+        }
+        if (testRegistry != null) {
+            Spectator.globalRegistry().remove(testRegistry);
         }
     }
 
@@ -312,6 +322,28 @@ public class DiscoveryClientRegistryTest {
         );
         assertThat(discoveryClientResource.awaitCacheUpdate(5, TimeUnit.SECONDS), is(true));
         assertEquals(client.getApplications().getRegisteredApplications(), new ArrayList<>());
+    }
+
+    @Test
+    public void testLookupMetricsIncremented() throws Exception {
+        Applications applications = InstanceInfoGenerator.newBuilder(2, "app1").build().toApplications();
+        InstanceInfo instance = applications.getRegisteredApplications("app1").getInstances().get(0);
+        String vipAddress = instance.getVIPAddress();
+
+        when(requestHandler.getApplications(TEST_REMOTE_REGION)).thenReturn(
+                anEurekaHttpResponse(200, applications).type(MediaType.APPLICATION_JSON_TYPE).build()
+        );
+
+        Registry registry = Spectator.globalRegistry();
+        Counter vipCounter = registry.counter(
+                registry.createId("DiscoveryClient_Lookup")
+                        .withTag("id", "getInstancesByVipAddress")
+                        .withTag("class", "DiscoveryClient"));
+        long initialCount = vipCounter.count();
+
+        discoveryClientResource.getClient().getInstancesByVipAddress(vipAddress, false);
+
+        assertThat(vipCounter.count(), is(equalTo(initialCount + 1)));
     }
 
     /**

@@ -129,6 +129,16 @@ public class DiscoveryClient implements EurekaClient {
     private final Timer FETCH_REGISTRY_TIMER = SpectatorUtil.timer(PREFIX + "FetchRegistry", DiscoveryClient.class);
     private final Counter REREGISTER_COUNTER = SpectatorUtil.counter(PREFIX + "Reregister", DiscoveryClient.class);
 
+    // Lookup counters
+    private final Counter LOOKUP_GET_APPLICATION = SpectatorUtil.counter(PREFIX + "Lookup", "getApplication", DiscoveryClient.class);
+    private final Counter LOOKUP_GET_APPLICATIONS = SpectatorUtil.counter(PREFIX + "Lookup", "getApplications", DiscoveryClient.class);
+    private final Counter LOOKUP_GET_APPLICATIONS_FOR_A_REGION = SpectatorUtil.counter(PREFIX + "Lookup", "getApplicationsForARegion", DiscoveryClient.class);
+    private final Counter LOOKUP_GET_INSTANCES_BY_ID = SpectatorUtil.counter(PREFIX + "Lookup", "getInstancesById", DiscoveryClient.class);
+    private final Counter LOOKUP_GET_INSTANCES_BY_VIP = SpectatorUtil.counter(PREFIX + "Lookup", "getInstancesByVipAddress", DiscoveryClient.class);
+    private final Counter LOOKUP_GET_INSTANCES_BY_VIP_AND_APP = SpectatorUtil.counter(PREFIX + "Lookup", "getInstancesByVipAddressAndAppName", DiscoveryClient.class);
+    private final Counter LOOKUP_GET_NEXT_SERVER = SpectatorUtil.counter(PREFIX + "Lookup", "getNextServerFromEureka", DiscoveryClient.class);
+    private final Counter LOOKUP_GET_APPLICATIONS_SERVICE_URL = SpectatorUtil.counter(PREFIX + "Lookup", "getApplicationsServiceUrl", DiscoveryClient.class);
+
     // instance variables
     /**
      * A scheduler to be used for the following 3 tasks:
@@ -459,7 +469,7 @@ public class DiscoveryClient implements EurekaClient {
     private void scheduleServerEndpointTask(EurekaTransport eurekaTransport,
                                             AbstractDiscoveryClientOptionalArgs args) {
 
-            
+
         Collection<?> additionalFilters = args == null
                 ? Collections.emptyList()
                 : args.additionalFilters;
@@ -560,6 +570,7 @@ public class DiscoveryClient implements EurekaClient {
      */
     @Override
     public Application getApplication(String appName) {
+        LOOKUP_GET_APPLICATION.increment();
         return getApplications().getRegisteredApplications(appName);
     }
 
@@ -570,11 +581,13 @@ public class DiscoveryClient implements EurekaClient {
      */
     @Override
     public Applications getApplications() {
+        LOOKUP_GET_APPLICATIONS.increment();
         return localRegionApps.get();
     }
 
     @Override
     public Applications getApplicationsForARegion(@Nullable String region) {
+        LOOKUP_GET_APPLICATIONS_FOR_A_REGION.increment();
         if (instanceRegionChecker.isLocalRegion(region)) {
             return localRegionApps.get();
         } else {
@@ -600,6 +613,7 @@ public class DiscoveryClient implements EurekaClient {
      */
     @Override
     public List<InstanceInfo> getInstancesById(String id) {
+        LOOKUP_GET_INSTANCES_BY_ID.increment();
         List<InstanceInfo> instancesList = new ArrayList<>();
         for (Application app : this.getApplications()
                 .getRegisteredApplications()) {
@@ -684,6 +698,7 @@ public class DiscoveryClient implements EurekaClient {
     @Override
     public List<InstanceInfo> getInstancesByVipAddress(String vipAddress, boolean secure,
                                                        @Nullable String region) {
+        LOOKUP_GET_INSTANCES_BY_VIP.increment();
         if (vipAddress == null) {
             throw new IllegalArgumentException(
                     "Supplied VIP Address cannot be null");
@@ -704,9 +719,7 @@ public class DiscoveryClient implements EurekaClient {
             return applications.getInstancesByVirtualHostName(vipAddress);
         } else {
             return applications.getInstancesBySecureVirtualHostName(vipAddress);
-
         }
-
     }
 
     /**
@@ -725,6 +738,7 @@ public class DiscoveryClient implements EurekaClient {
     @Override
     public List<InstanceInfo> getInstancesByVipAddressAndAppName(
             String vipAddress, String appName, boolean secure) {
+        LOOKUP_GET_INSTANCES_BY_VIP_AND_APP.increment();
 
         List<InstanceInfo> result = new ArrayList<>();
         if (vipAddress == null && appName == null) {
@@ -779,6 +793,7 @@ public class DiscoveryClient implements EurekaClient {
      */
     @Override
     public InstanceInfo getNextServerFromEureka(String virtualHostname, boolean secure) {
+        LOOKUP_GET_NEXT_SERVER.increment();
         List<InstanceInfo> instanceInfoList = this.getInstancesByVipAddress(
                 virtualHostname, secure);
         if (instanceInfoList == null || instanceInfoList.isEmpty()) {
@@ -800,6 +815,7 @@ public class DiscoveryClient implements EurekaClient {
      */
     @Override
     public Applications getApplications(String serviceUrl) {
+        LOOKUP_GET_APPLICATIONS_SERVICE_URL.increment();
         try {
             EurekaHttpResponse<Applications> response = clientConfig.getRegistryRefreshSingleVipAddress() == null
                     ? eurekaTransport.queryClient.getApplications()
